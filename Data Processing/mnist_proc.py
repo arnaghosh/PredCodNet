@@ -27,5 +27,5 @@ for idx in tqdm(range(len(train_imgs))):
 	translation = translation_arr[idx]
 
 	img_tfo = ndimage.rotate(img,rotation,reshape=False)
-	img_tfo = ndimage.shift(img_tfo,[0,translation],c_val=0)
+	img_tfo = ndimage.shift(img_tfo,[0,translation],cval=0)
 	tfo_dataset.append((img,rotation,translation,img_tfo))
