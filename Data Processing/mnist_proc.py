@@ -38,4 +38,4 @@ for idx in tqdm(range(len(imgs))):
 	tfo_dataset.append((img,rotation,translation,img_tfo))
 
 tfo_dataset = np.array(tfo_dataset)
-np.savez(os.path.join(os.environ['SLURM_TMPDIR'],('processed_train_mnist' if mode==0 else 'processed_test_mnist')),data=tfo_dataset,labels=mnist_labels)
+np.savez(os.path.join(os.environ['SLURM_TMPDIR'],('processed_train_mnist' if mode==0 else 'processed_test_mnist')),data=tfo_dataset,labels=labels)
