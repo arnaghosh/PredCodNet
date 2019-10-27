@@ -10,7 +10,7 @@ mnist_train_labels = '/network/data1/mnist/train-labels-idx1-ubyte'
 mnist_test = '/network/data1/mnist/t10k-images-idx3-ubyte'
 mnist_test_labels = '/network/data1/mnist/t10k-labels-idx1-ubyte'
 
-mode = 1 	# 0 for train and 1 for test dataset
+mode = 0 	# 0 for train and 1 for test dataset
 
 if mode==0:
 	imgs = idx2numpy.convert_from_file(mnist_train)
