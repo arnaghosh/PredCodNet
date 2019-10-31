@@ -26,7 +26,7 @@ for f in fractions_to_try:
 	if gpu:
 		network = network.cuda()
 
-	n_epochs = 21
+	n_epochs = 30
 	log_interval = 200
 	test_interval = 3
 	train_losses = []
