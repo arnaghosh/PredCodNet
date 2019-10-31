@@ -14,8 +14,8 @@ if torch.cuda.is_available():
 else:
 	gpu = False
 
-# fractions_to_try = [0.01,0.02,0.05,0.1,0.2,0.4,0.8,1]
-fractions_to_try = [0.01,0.02]
+fractions_to_try = [0.005,0.01,0.02,0.05,0.1,0.2,0.5,1]
+# fractions_to_try = [0.01,0.02]
 
 for f in fractions_to_try:
 	train_loader = torch.utils.data.DataLoader(MNISTDataset('../Data Processing/processed_train_mnist.npz',transform=torchvision.transforms.Compose([torchvision.transforms.ToTensor(),torchvision.transforms.Normalize((0.1307,),(0.3081,))]),fraction=f), batch_size=128, shuffle=True)
@@ -80,4 +80,4 @@ for f in fractions_to_try:
 				best_acc = accuracy
 				best_acc_epoch = epoch
 
-	print("For {}% of labels used, best accuracy achieved is {:.2f}% after {} epochs\n=============================================================\n".format(100*f,best_acc,best_acc_epoch))
+	print("For {}% of labels ({}) used, best accuracy achieved is {:.2f}% after {} epochs\n=============================================================\n".format(100*f,len(train_loader.dataset),best_acc,best_acc_epoch))
