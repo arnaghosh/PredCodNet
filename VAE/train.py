@@ -21,7 +21,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 train_loader = torch.utils.data.DataLoader(MNISTDataset('../Data Processing/processed_train_mnist.npz',transform=torchvision.transforms.Compose([torchvision.transforms.ToTensor()])), batch_size=128, shuffle=True)
 test_loader = torch.utils.data.DataLoader(MNISTDataset('../Data Processing/processed_test_mnist.npz',transform=torchvision.transforms.Compose([torchvision.transforms.ToTensor()])), batch_size=500, shuffle=True)
 
-network = VAE_MLP(28*28,[250,100],20).to(device)
+network = VAE_MLP(28*28,[250,100],50).to(device)
 learning_rate = 0.002
 learning_rate_decay = 0.001
 optimizer = optim.Adam(network.parameters(), lr=learning_rate)
@@ -102,16 +102,18 @@ def plot_results():
 	plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_VAE_recon.png'))
 
 	z_vec = torch.Tensor(0)
+	label_vec = torch.Tensor(0).type(torch.LongTensor)
 	with torch.no_grad():
 		for batch_idx, (data, target) in enumerate(test_loader):
 			data = data.to(device)
 			recon, mu, sigma, latent_z = network(data.view(-1,28*28))
 			z_vec = torch.cat((z_vec,latent_z.cpu()),dim=0)
+			label_vec = torch.cat((label_vec,target.type(torch.LongTensor)),dim=0)
 	from sklearn.decomposition import PCA
 	pca = PCA(n_components=2)
 	z_pca = pca.fit_transform(z_vec)
 	plt.figure()
-	plt.scatter(z_pca[:,0],z_pca[:,1])
+	plt.scatter(z_pca[:,0],z_pca[:,1],c=label_vec)
 	plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_VAE_latent.png'))
 
 
