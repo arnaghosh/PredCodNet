@@ -27,7 +27,7 @@ test_loader = torch.utils.data.DataLoader(MNISTDataset_pairs('../Data Processing
 
 network = CVAE_MLP_latent_tfo_modif(28*28,[250,100],50).to(device)
 learning_rate = 0.002
-learning_rate_decay = 0.01
+learning_rate_decay = 0.001
 optimizer = optim.Adam(network.parameters(), lr=learning_rate)
 
 n_epochs = 100
