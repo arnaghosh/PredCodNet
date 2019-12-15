@@ -147,8 +147,8 @@ class CVAE_MLP_latent_tfo(nn.Module):
 		self.output_dim = output_dim
 		self.encoder = Encoder_MLP(input_dim,hidden_dims,output_dim)
 		self.decoder = Decoder_MLP(output_dim,hidden_dims[::-1],input_dim)
-		self.context_layer = nn.Linear(2,self.output_dim)
-		self.context_layer_latent = nn.Linear(2,self.output_dim)
+		self.context_layer = nn.Linear(2,self.output_dim,bias=False)
+		self.context_layer_latent = nn.Linear(2,self.output_dim,bias=False)
 
 	def forward(self, X, c1, c2):
 		c1 = c1.view(-1,1)
@@ -156,7 +156,7 @@ class CVAE_MLP_latent_tfo(nn.Module):
 		C = torch.cat((c1,c2),dim=-1)
 		mu,sigma = self.encoder(X)
 		z = mu + sigma*torch.randn_like(mu)
-		W_z = torch.diag_embed(F.softplus(self.context_layer_latent(C))).to(z.device)
+		W_z = torch.diag_embed(1.+F.relu(self.context_layer_latent(C))).to(z.device)
 		z_unsqueezed = z.unsqueeze(2)
 		z_hat = torch.bmm(W_z,z_unsqueezed).squeeze() + self.context_layer(C)
 		x_hat = self.decoder(z_hat)
@@ -171,8 +171,8 @@ class CVAE_MLP_latent_tfo_modif(nn.Module):
 		self.output_dim = output_dim
 		self.encoder = Encoder_MLP(input_dim,hidden_dims,output_dim)
 		self.decoder = Decoder_MLP(output_dim,hidden_dims[::-1],input_dim)
-		self.context_layer = nn.Linear(2,self.output_dim)
-		self.context_layer_latent = nn.Linear(2,self.output_dim)
+		self.context_layer = nn.Linear(2,self.output_dim,bias=False)
+		self.context_layer_latent = nn.Linear(2,self.output_dim,bias=False)
 
 	def forward(self, X, c1, c2):
 		c1 = c1.view(-1,1)
@@ -181,7 +181,7 @@ class CVAE_MLP_latent_tfo_modif(nn.Module):
 		mu,sigma = self.encoder(X)
 		z = mu + sigma*torch.randn_like(mu)
 		x_recon = self.decoder(z)
-		W_z = torch.diag_embed(F.softplus(self.context_layer_latent(C))).to(z.device)
+		W_z = torch.diag_embed(1.+F.relu(self.context_layer_latent(C))).to(z.device)
 		z_unsqueezed = z.unsqueeze(2)
 		z_hat = torch.bmm(W_z,z_unsqueezed).squeeze() + self.context_layer(C)
 		x_hat = self.decoder(z_hat)

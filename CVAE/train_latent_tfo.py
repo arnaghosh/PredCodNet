@@ -23,9 +23,10 @@ test_loader = torch.utils.data.DataLoader(MNISTDataset_pairs('../Data Processing
 # max_translation = 6
 # max_rotation = 45
 
+run_updated_ver = 1
 network = CVAE_MLP_latent_tfo(28*28,[250,100],50).to(device)
 learning_rate = 0.002
-learning_rate_decay = 0.01
+learning_rate_decay = 0.001
 optimizer = optim.Adam(network.parameters(), lr=learning_rate)
 
 n_epochs = 100
@@ -51,6 +52,17 @@ def train(epoch):
 		loss = VAE_loss(data_tfo,recon,mu,sigma)
 		loss.backward()
 		optimizer.step()
+		if run_updated_ver:
+			optimizer.zero_grad()
+			rot_zero = rot.new_zeros(rot.size())
+			trans_zero = trans.new_zeros(trans.size())
+			rot_zero = rot_zero.to(device)
+			trans_zero = trans_zero.to(device)
+			data_tfo = data_tfo.to(device)
+			recon, mu, sigma, latent_z, latent_z_hat = network(data_tfo,rot_zero,trans_zero)
+			loss = VAE_loss(data_tfo,recon,mu,sigma)
+			loss.backward()
+			optimizer.step()
 		if batch_idx % log_interval == 0:
 				tqdm.write("Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(epoch, batch_idx * len(data), len(train_loader.dataset), 100. * batch_idx / len(train_loader), loss.item()))
 				train_losses.append(loss.cpu().item())
@@ -69,13 +81,25 @@ def test():
 			recon, mu, sigma, latent_z, latent_z_hat = network(data,rot,trans)
 			test_loss += VAE_loss(data_tfo,recon,mu,sigma).cpu().item()
 			test_cntr +=1
+			if run_updated_ver:
+				rot_zero = rot.new_zeros(rot.size())
+				trans_zero = trans.new_zeros(trans.size())
+				rot_zero = rot_zero.to(device)
+				trans_zero = trans_zero.to(device)
+				data_tfo = data_tfo.to(device)
+				recon, mu, sigma, latent_z, latent_z_hat = network(data_tfo,rot_zero,trans_zero)
+				test_loss += VAE_loss(data_tfo,recon,mu,sigma).cpu().item()
+				test_cntr +=1
 	test_loss/=test_cntr
 	tqdm.write("Test set: Avg loss: {:.4f}\n".format(test_loss))
 	test_losses.append(test_loss)
 	return test_loss
 
 def plot_results():
-	network.load_state_dict(torch.load(os.path.join(os.environ['SLURM_TMPDIR'],'CVAE_Ztfo1_MLP_model.pt')))
+	if run_updated_ver:
+		network.load_state_dict(torch.load(os.path.join(os.environ['SLURM_TMPDIR'],'CVAE_Ztfo1_MLP_model++.pt')))
+	else:
+		network.load_state_dict(torch.load(os.path.join(os.environ['SLURM_TMPDIR'],'CVAE_Ztfo1_MLP_model.pt')))
 	network.eval()
 	# choose 5 random train images
 	rand_indices = np.random.randint(0,len(train_loader.dataset)+1,size=(5,))
@@ -129,7 +153,10 @@ def plot_results():
 		plt.subplot(5,6,6*i+5); plt.imshow(test_image_tfo_tensor[i])
 		plt.subplot(5,6,6*i+6); plt.imshow(recon_test_images[i])
 
-	plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_recon.png'))
+	if run_updated_ver:
+		plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_recon++.png'))
+	else:
+		plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_recon.png'))
 
 	z_vec = torch.Tensor(0)
 	z_hat_vec = torch.Tensor(0)
@@ -151,18 +178,30 @@ def plot_results():
 	z_hat_pca = pca2.fit_transform(z_hat_vec)
 	plt.figure()
 	plt.scatter(z_pca[:,0],z_pca[:,1],c=label_vec)
-	plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_latent.png'))
+	if run_updated_ver:
+		plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_latent++.png'))
+	else:
+		plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_latent.png'))
 	plt.figure()
 	plt.hist2d(z_pca[:,0],z_pca[:,1],(50,50),cmap=plt.cm.plasma)
 	plt.colorbar()
-	plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_latent_dist.png'))
+	if run_updated_ver:
+		plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_latent_dist++.png'))
+	else:
+		plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_latent_dist.png'))
 	plt.figure()
 	plt.scatter(z_hat_pca[:,0],z_hat_pca[:,1],c=label_vec)
-	plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_latent_hat.png'))
+	if run_updated_ver:
+		plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_latent_hat++.png'))
+	else:
+		plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_latent_hat.png'))
 	plt.figure()
 	plt.hist2d(z_hat_pca[:,0],z_hat_pca[:,1],(50,50),cmap=plt.cm.plasma)
 	plt.colorbar()
-	plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_latent_hat_dist.png'))
+	if run_updated_ver:
+		plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_latent_hat_dist++.png'))
+	else:
+		plt.savefig(os.path.join(os.environ['SLURM_TMPDIR'],'test_CVAE_Ztfo1_latent_hat_dist.png'))
 
 
 best_test_loss = 10000
@@ -173,6 +212,9 @@ for epoch in tqdm(range(1,n_epochs+1)):
 		if test_loss <=best_test_loss:
 			best_test_loss = test_loss
 			tqdm.write("Saving model at epoch# {}\n".format(epoch))
-			torch.save(network.cpu().state_dict(),os.path.join(os.environ['SLURM_TMPDIR'],'CVAE_Ztfo1_MLP_model.pt'))
+			if run_updated_ver:
+				torch.save(network.cpu().state_dict(),os.path.join(os.environ['SLURM_TMPDIR'],'CVAE_Ztfo1_MLP_model++.pt'))
+			else:
+				torch.save(network.cpu().state_dict(),os.path.join(os.environ['SLURM_TMPDIR'],'CVAE_Ztfo1_MLP_model.pt'))
 			network = network.to(device)
 plot_results()
